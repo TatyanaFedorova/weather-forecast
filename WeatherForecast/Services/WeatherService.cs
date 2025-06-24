@@ -1,9 +1,7 @@
-using WeatherForecast.DTOs;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
-using System.ComponentModel.DataAnnotations;
 
 namespace WeatherForecast.Services
 {
@@ -49,7 +47,6 @@ namespace WeatherForecast.Services
                 return cachedCities;
 
             var requestUri = $"{_baseUrl}/locations/v1/cities/search?apikey={_apiKey}&q={Uri.EscapeDataString(cityName)}";
-            //var requestUri = $"http://dataservice.accuweather.com/locations/v1/cities/search?apikey={_apiKey}&q={Uri.EscapeDataString(cityName)}";
             var response = await ExecuteWithRetryAsync(() => _httpClient.GetAsync(requestUri));
 
             if (!response.IsSuccessStatusCode)
@@ -74,7 +71,9 @@ namespace WeatherForecast.Services
                 Country = city.Country?.EnglishName ?? string.Empty,
                 AdministrativeArea = city.AdministrativeArea?.EnglishName ?? string.Empty,
                 Rank = city.Rank != 0 ? city.Rank : int.MaxValue
-            }).ToList();
+            })
+            .OrderBy(city => city.Rank)
+            .ToList();
 
             _memoryCache.Set(cacheKey, results, TimeSpan.FromHours(1));
 
@@ -126,55 +125,6 @@ namespace WeatherForecast.Services
             return dto;
         }
 
-        public async Task<WeatherForecastDTO?> GetWeatherForecastForCityAsync(string cityKey)
-        {
-
-            if (string.IsNullOrEmpty(cityKey))
-            {
-                throw new ArgumentOutOfRangeException(nameof(cityKey), "City ID must be greater than zero.");
-            }
-
-            string cacheKey = $"weatherforecast_{cityKey}";
-            if (_memoryCache.TryGetValue(cacheKey, out WeatherForecastDTO? cachedForecast) && cachedForecast != null)
-                return cachedForecast;
-
-            var requestUri = $"{_baseUrl}/forecasts/v1/daily/1day/{cityKey}?apikey={_apiKey}";
-
-            _httpClient.BaseAddress = new Uri(_baseUrl);
-
-            var response = await ExecuteWithRetryAsync(() => _httpClient.GetAsync(requestUri));
-
-            if (!response.IsSuccessStatusCode)
-            {
-                throw new HttpRequestException($"Error fetching weather data for city ID {cityKey}: {response.ReasonPhrase}");
-            }
-
-            var content = await response.Content.ReadAsStringAsync();
-            if (string.IsNullOrEmpty(content))
-            {
-                throw new InvalidOperationException("Received empty response from weather API.");
-            }
-
-            var weatherData = JsonSerializer.Deserialize<WeatherForecastResult>(content, _jsonSerializerOptions);
-
-            if (weatherData == null)
-            {
-                throw new InvalidOperationException("Failed to deserialize weather data.");
-            }
-
-            var dto = new WeatherForecastDTO
-            {
-                Description = weatherData.Headline?.Text ?? "No description available",
-                MinTemperature = TemperatureConverter.ToCelsius(weatherData.DailyForecasts?[0]?.Temperature?.Minimum?.Value ?? 0),
-                MaxTemperature = TemperatureConverter.ToCelsius(weatherData.DailyForecasts?[0]?.Temperature?.Maximum?.Value ?? 0),
-                DayDescription = weatherData.DailyForecasts?[0].Day.IconPhrase ?? "No day description available",
-                NightDescription = weatherData.DailyForecasts?[0].Night.IconPhrase ?? "No night description available"
-            };
-
-            _memoryCache.Set(cacheKey, dto, TimeSpan.FromMinutes(_settings.Value.ForecastMinutes));
-            return dto;
-        }
-
         private async Task<HttpResponseMessage> ExecuteWithRetryAsync(Func<Task<HttpResponseMessage>> operation)
         {
             const int maxRetries = 3;
@@ -198,53 +148,22 @@ namespace WeatherForecast.Services
 
             throw new HttpRequestException("Failed after retries.");
         }
-        #region WeatherForecastDataStructures
-        private record WeatherForecastResult
+
+        #region CurrentWetherDataStructures
+        private record CurrentWeatherResult
         {
-            [JsonPropertyName("Headline")]
-            public WeatherForecastHeadline? Headline { get; init; }
 
-            [JsonPropertyName("DailyForecasts")]
-            public List<DailyForecast>? DailyForecasts { get; init; }
-        }
+            [JsonPropertyName("WeatherText")]
+            public string WeatherText { get; init; } = string.Empty;
 
-        private record WeatherForecastHeadline
-        {
-            [JsonPropertyName("Text")]
-            public string Text { get; init; } = string.Empty;
-
-            [JsonPropertyName("EffectiveDate")]
-            public DateTime EffectiveDate { get; init; }
-        }
-
-        private record DailyForecast
-        {
             [JsonPropertyName("Temperature")]
             public Temperature Temperature { get; init; } = new Temperature();
-
-            [JsonPropertyName("Day")]
-            public DayDescription Day { get; init; } = new DayDescription();
-
-            [JsonPropertyName("Night")]
-            public DayDescription Night { get; init; } = new DayDescription();
         }
 
-        private record Temperature
+         private record Temperature
         {
-            [JsonPropertyName("Minimum")]
-            public TemperatureDetails? Minimum { get; init; }
-
-            [JsonPropertyName("Maximum")]
-            public TemperatureDetails? Maximum { get; init; }
-
             [JsonPropertyName("Metric")]
             public TemperatureDetails? Metric { get; init; }
-        }
-
-        private record DayDescription
-        {
-            [JsonPropertyName("IconPhrase")]
-            public string IconPhrase { get; init; } = string.Empty;
         }
 
         private record TemperatureDetails
@@ -257,18 +176,6 @@ namespace WeatherForecast.Services
 
             [JsonPropertyName("UnitType")]
             public int UnitType { get; init; }
-        }
-
-        #endregion
-        #region CurrentWetherDataStructures
-        private record CurrentWeatherResult
-        {
-
-            [JsonPropertyName("WeatherText")]
-            public string WeatherText { get; init; } = string.Empty;
-
-            [JsonPropertyName("Temperature")]
-            public Temperature Temperature { get; init; } = new Temperature();
         }
         #endregion
         #region CityDataStructures

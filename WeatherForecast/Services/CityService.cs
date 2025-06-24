@@ -3,7 +3,7 @@ using WeatherForecast.Models;
 
 namespace WeatherForecast.Services
 {
-    public class CityService
+    public class CityService : ICityService
     {
         private readonly ICityRepository _cityRepository;
 
@@ -12,38 +12,32 @@ namespace WeatherForecast.Services
             _cityRepository = cityRepository;
         }
 
-        public async Task<IEnumerable<City>> GetAllCitiesAsync()
+        public async Task<IEnumerable<CityDTO>?> GetAllCitiesAsync()
         {
-            return await _cityRepository.GetAllAsync();
-        }
-
-        public async Task<City?> GetCityByIdAsync(int id)
-        {
-            return await _cityRepository.GetByIdAsync(id);
-        }
-
-        public async Task AddCityAsync(City city)
-        {
-            await _cityRepository.AddAsync(city);
-        }
-
-        public async Task UpdateCityAsync(long id, City city)
-        {
-            if (id != city.Id)
+            var cities = await _cityRepository.GetAllAsync();
+            var cityDTOs = cities?.Select(c => new CityDTO()
             {
-                throw new ArgumentException("City ID mismatch.");
-            }
-            await _cityRepository.UpdateAsync(city);
+                LocationKey = c.LocationKey,
+                Name = c.Name,
+                Country = c.Country,
+                AdministrativeArea = c.AdministrativeArea,
+                Rank = c.Rank
+            }).ToList();
+
+            if (cityDTOs is null) return null;
+            return cityDTOs;
         }
 
-        public async Task DeleteCityAsync(int id)
+        public async Task AddCityAsync(CityDTO cityDTO)
         {
-            await _cityRepository.DeleteAsync(id);
-        }
-
-        public async Task<IEnumerable<City>> GetLatestCitiesAsync(int? count = null)
-        {
-            return await _cityRepository.GetLatest(count);
+            await _cityRepository.AddAsync(new City()
+            {
+                AdministrativeArea = cityDTO.AdministrativeArea,
+                Country = cityDTO.Country,
+                LocationKey = cityDTO.LocationKey,
+                Name = cityDTO.Name,
+                Rank = cityDTO.Rank
+            });
         }
     }
 }

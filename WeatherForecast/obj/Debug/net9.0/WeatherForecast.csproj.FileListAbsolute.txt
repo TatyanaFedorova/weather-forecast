@@ -154,3 +154,4 @@ C:\TechChallenge\WeatherForecast\obj\Debug\net9.0\ref\WeatherForecast.dll
 C:\TechChallenge\WeatherForecast\bin\Debug\net9.0\Swashbuckle.AspNetCore.Swagger.dll
 C:\TechChallenge\WeatherForecast\bin\Debug\net9.0\Swashbuckle.AspNetCore.SwaggerGen.dll
 C:\TechChallenge\WeatherForecast\bin\Debug\net9.0\Swashbuckle.AspNetCore.SwaggerUI.dll
+C:\TechChallenge\WeatherForecast\obj\Debug\net9.0\WeatherForecast.sourcelink.json

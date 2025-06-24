@@ -1,5 +1,4 @@
-using WeatherForecast.Services;
-using WeatherForecast.Models;
+using Microsoft.AspNetCore.Mvc;
 
 namespace WeatherForecast.Mappings
 {
@@ -8,48 +7,28 @@ namespace WeatherForecast.Mappings
         public static void MapCityEndpoints(this IEndpointRouteBuilder routes)
         {
             var group = routes.MapGroup("/api/cities");
-            group.MapGet("/", async (CityService cityService) =>
-            {
-                var cities = await cityService.GetAllCitiesAsync();
-                return Results.Ok(cities);
-            });
-
-            group.MapGet("/{id}", async (int id, CityService cityService) =>
-            {
-                var city = await cityService.GetCityByIdAsync(id);
-                return city is not null ? Results.Ok(city) : Results.NotFound();
-            });
-
-            group.MapPost("/", async (City city, CityService cityService) =>
-            {
-                await cityService.AddCityAsync(city);
-                return Results.Created($"/api/cities/{city.Id}", city);
-            });
-
-            group.MapPut("/{id}", async (int id, City city, CityService cityService) =>
+            group.MapGet("/", async ([FromServices] ICityService cityService) =>
             {
                 try
                 {
-                    await cityService.UpdateCityAsync(id, city);
-                    return Results.NoContent();
+                    var cities = await cityService.GetAllCitiesAsync();
+                    return Results.Ok(cities);
                 }
-                catch (ArgumentException)
+                catch (ArgumentException ex)
                 {
-                    return Results.BadRequest("City ID mismatch.");
+                    return Results.BadRequest(new { message = ex.Message });
                 }
-
+                catch (Exception)
+                {
+                    // Log the exception if needed
+                    return Results.Problem("An unexpected error occurred while retrieving cities.");
+                }
             });
 
-            group.MapDelete("/{id}", async (int id, CityService cityService) =>
+            group.MapPost("/", async (CityDTO cityDTO, [FromServices] ICityService cityService) =>
             {
-                await cityService.DeleteCityAsync(id);
-                return Results.NoContent();
-            });
-
-            group.MapGet("/getlatest", async (int? count, CityService cityService) =>
-            {
-                var cities = await cityService.GetLatestCitiesAsync(count);
-                return Results.Ok(cities);
+                await cityService.AddCityAsync(cityDTO);
+                return Results.Created();
             });
         }
     }

@@ -14,14 +14,11 @@ namespace WeatherForecast.Repositories
             _context = context;
         }
 
-        public async Task<City?> GetByIdAsync(int id)
-        {
-            return await _context.Cities.FindAsync(id);
-        }
-
         public async Task<IEnumerable<City>> GetAllAsync()
         {
-            return await _context.Cities.ToListAsync();
+            return await _context.Cities
+            .OrderByDescending(c => c.LastUpdated)
+            .ToListAsync();
         }
 
         public async Task AddAsync(City city)
@@ -33,34 +30,6 @@ namespace WeatherForecast.Repositories
             city.LastUpdated = DateTime.UtcNow; // Set the last updated time
             await _context.Cities.AddAsync(city);
             await _context.SaveChangesAsync();
-        }
-
-        public async Task UpdateAsync(City city)
-        {
-            city.LastUpdated = DateTime.UtcNow; // Update the last updated time
-            _context.Cities.Update(city);
-            await _context.SaveChangesAsync();
-        }
-
-        public async Task DeleteAsync(int id)
-        {
-            var city = await GetByIdAsync(id);
-            if (city != null)
-            {
-                _context.Cities.Remove(city);
-                await _context.SaveChangesAsync();
-            }
-        }
-        public async Task<IEnumerable<City>> GetLatest(int? count = null)
-        {
-
-            var latestUpdatedCities = _context.Cities.OrderByDescending(c => c.LastUpdated);
-            if (count.HasValue)
-            {
-                return await latestUpdatedCities.Take(count.Value).ToListAsync();
-            }
-
-            return await latestUpdatedCities.ToListAsync();
         }
     }
 }

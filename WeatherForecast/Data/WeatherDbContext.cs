@@ -10,6 +10,13 @@ namespace WeatherForecast.Data
         {
         }
 
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<City>()
+                .HasIndex(c => c.LocationKey)
+                .IsUnique();
+        }
+
         // Example DbSet, replace with your actual entities
         public DbSet<Models.City> Cities => Set<Models.City>();
     }

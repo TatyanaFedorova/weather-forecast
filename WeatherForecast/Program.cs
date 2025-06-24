@@ -4,8 +4,6 @@ using WeatherForecast.Repositories;
 using WeatherForecast.Mappings;
 using Microsoft.EntityFrameworkCore;
 using WeatherForecast.Services;
-using Microsoft.Extensions.Caching.Memory;
-using Microsoft.Extensions.Options;
 using Microsoft.AspNetCore.Http.Json;
 
 
@@ -17,10 +15,9 @@ builder.Services.AddDbContext<WeatherDbContext>(options =>
 builder.Services.AddScoped<ICityRepository, CityRepository>();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddHttpClient();
-builder.Services.AddScoped<CityService>();
-builder.Services.AddMemoryCache();
-
+builder.Services.AddScoped<ICityService, CityService>();
 builder.Services.AddSingleton<IWeatherService, WeatherService>();
+builder.Services.AddMemoryCache();
 builder.Services.AddSwaggerGen();
 
 builder.Services.Configure<WeatherSettings>(builder.Configuration.GetSection("WeatherSettings"));

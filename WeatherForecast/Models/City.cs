@@ -7,6 +7,7 @@ namespace WeatherForecast.Models
         public string Name { get; set; } = string.Empty;
         public string Country { get; set; } = string.Empty;
         public string AdministrativeArea { get; set; } = string.Empty;
+        public int Rank { get; init; }
         public DateTime LastUpdated { get; set; } = DateTime.UtcNow;
     }
 }
