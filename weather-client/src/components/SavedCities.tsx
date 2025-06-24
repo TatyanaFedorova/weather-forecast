@@ -7,7 +7,6 @@ interface SavedCityProps {
 }
 
 export function SavedCities({cities, selectedKey, onChange}: SavedCityProps){
-    if(cities?.length === 0) return (<span className="block mb-2 font-semibold">City with this name is not found.</span>)
     return (
     <div>      
       <label htmlFor="citySelect" className="block mb-2 font-semibold">Choose from your favorite cities:</label>
