@@ -13,6 +13,8 @@ export function CitySearchBar({ onSearch }: SearchProps) {
   };
 
   return (
+    <>
+    <label htmlFor="citySelect" className="block mb-2 font-semibold">Or search for a city to display the weather:</label>
     <div className="flex items-center gap-2">
       <form onSubmit={handleSubmit} className="flex gap-2 mb-4">
         <input
@@ -25,5 +27,6 @@ export function CitySearchBar({ onSearch }: SearchProps) {
         <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Search</button>
       </form>
     </div>
+    </>
   );
 }

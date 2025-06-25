@@ -112,10 +112,10 @@ function App() {
       <span className="block sm:inline ml-2">{error}</span>
     </div> )   
     }      
+      <WeatherCard weather={weather} city={selectedCity}/>
       <SavedCities cities={savedCities} 
         selectedKey={selectedCity?.LocationKey ?? ""} 
         onChange ={handleChange} />
-      <WeatherCard weather={weather} city={selectedCity}/>
       <CitySearchBar onSearch={handleSearch} />
       <SearchResultsList cities={foundCities} onSelect={handleSelectCity} />     
     </div>
